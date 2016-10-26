@@ -5,8 +5,8 @@ import traceback
 
 app = Flask(__name__)
 
-CERT_KEY = ('/var/www/httpd-cert/aseev/easr.ru_le1.key')
-CERT = ('/var/www/httpd-cert/aseev/easr.ru_le1.crt')
+CERT_KEY = ('easr.ru.key')
+CERT = ('easr.ru.crt')
 context = (CERT, CERT_KEY)
 
 @app.route('/', methods=['POST'])
