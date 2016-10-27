@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, request, make_response, jsonify
+from flask import Flask, request, make_response
 import json
+from pprint import pprint
 import traceback
 
 app = Flask(__name__)
@@ -19,7 +20,7 @@ def hook():
 				ticket_key = jdata['issue']['key']
 
 				print('Ticket: %s' % (ticket_key))
-				print(jdata)
+				pprint(jdata)
 				return make_response('ok', 200)
 			else:
 				msg = 'Invalid JIRA hook event. It should be "jira:issue_created" or "_updated"'
