@@ -9,7 +9,7 @@ app = Flask(__name__)
 @app.route('/', methods=['POST'])
 def hook():
 	if request.method == 'POST':
-		print('Сейчас произошел POST-запрос')
+
 		data = request.data
 		data = data.decode('utf-8')
 
