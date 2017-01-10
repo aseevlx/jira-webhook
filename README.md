@@ -1,7 +1,9 @@
 # jira_webhook
 Small Python server, that listen for your Jira Webhooks and render .docx file.
 Uses Python 3.5, Flask, and some other stuff.
+Script generate new document from template_opl.docx and save new file with name "KEY-XX.docx" where "KEY" - key from task (JRA-1, for example)
 
 
-Скрипт на Python, который слушает Jira Webhooks и генерирует .docx на основе данных из таска.
-Используется для генерации заявления на отпуск, читает из полей "Начало отпуска", "Окончание отпуска", и т.д.
+РЎРєСЂРёРїС‚ РЅР° Python, РєРѕС‚РѕСЂС‹Р№ СЃР»СѓС€Р°РµС‚ Jira Webhooks Рё РіРµРЅРµСЂРёСЂСѓРµС‚ .docx РЅР° РѕСЃРЅРѕРІРµ РґР°РЅРЅС‹С… РёР· С‚Р°СЃРєР°.
+РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ РіРµРЅРµСЂР°С†РёРё Р·Р°СЏРІР»РµРЅРёСЏ РЅР° РѕС‚РїСѓСЃРє, С‡РёС‚Р°РµС‚ РёР· РїРѕР»РµР№ "РќР°С‡Р°Р»Рѕ РѕС‚РїСѓСЃРєР°", "РћРєРѕРЅС‡Р°РЅРёРµ РѕС‚РїСѓСЃРєР°", Рё С‚.Рґ.
+РС‚РѕРіРѕРІС‹Р№ РґРѕРєСѓРјРµРЅС‚ РіРµРЅРµСЂРёСЂСѓРµС‚СЃСЏ СЃ РїРѕРјРѕС‰СЊСЋ jinja-templates РёР· template_opl.docx Рё СЃРѕС…СЂР°РЅСЏРµС‚СЃСЏ СЃ РёРјРµРЅРµРј "KEY-XX.docx", РіРґРµ "KEY" - РєР»СЋС‡ С‚Р°СЃРєР° (JRA-1, Рє РїСЂРёРјРµСЂСѓ)
