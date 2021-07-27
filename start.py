@@ -1,80 +1,63 @@
-# -*- coding: utf-8 -*-
-from flask import Flask, request, make_response
-from datetime import datetime, date
-from docxtpl import DocxTemplate
-
 import json
-from pprint import pprint
-import traceback
+from datetime import datetime
+
+from flask import Flask, request, make_response
+from docxtpl import DocxTemplate
 
 app = Flask(__name__)
 
+
+# TODO: change these fields to match your
+custom_fields = {
+	'start_of_vacation': 'customfield_16600',
+	'end_of_vacation': 'customfield_16601',
+	'reporter_name': 'customfield_17600',
+	'office_position': 'customfield_17601',
+}
+
+
 @app.route('/', methods=['POST'])
 def hook():
-	if request.method == 'POST':
-		
-		data = request.data
-		data = data.decode('utf-8')
-	
-		def string_to_date(datestring):
-			"""Convert string with date from Jira to Python date type"""
-			return datetime.strptime(datestring, '%Y-%m-%d')
+	try:
+		payload = request.json
+		supported_events = ('jira:issue_created', 'jira:issue_updated')
 
-		def holiday_duration(start_of_holiday, end_of_holiday):
-			"""Calculate duration of holiday"""
-			return str(string_to_date(end_of_holiday) - string_to_date(start_of_holiday)).split()[0]
+		if payload['webhookEvent'] not in supported_events:
+			error_message = 'Invalid JIRA hook event. It should be "jira:issue_created" or "jira:issue_updated"'
+			print(error_message)
+			return make_response(error_message, 403)
 
-		try:
-			jdata = json.loads(data)
+		issue_fields = payload['issue']['fields']
 
-			if jdata['webhookEvent'] == 'jira:issue_created' or jdata['webhookEvent'] == 'jira:issue_updated':
+		start_of_vacation = datetime.strptime(issue_fields[custom_fields['start_of_vacation']], '%Y-%m-%d')
+		end_of_vacation = datetime.strptime(issue_fields[custom_fields['end_of_vacation']], '%Y-%m-%d')
+		vacation_duration = (start_of_vacation - end_of_vacation).days
 
-				start_of_holiday = jdata['issue']['fields']['customfield_16600']
-				end_of_holiday = jdata['issue']['fields']['customfield_16601']
+		doc_vars = {
+			'reporter_name': issue_fields[custom_fields['reporter_name']],
+			'office_position': issue_fields[custom_fields['office_position']],
+			'issue_type': issue_fields['issuetype']['name'],
+			'start_day': start_of_vacation.day,
+			'start_month': start_of_vacation.month,
+			'end_day': end_of_vacation.day,
+			'end_month': end_of_vacation.month,
+			'end_year': end_of_vacation.year,
+			'end_of_vacation': end_of_vacation.strftime('%d-%m-%Y'),
+			'vacation_duration': vacation_duration,
+			'now_day': datetime.now().day,
+			'now_month': datetime.now().month,
+			'now_year': datetime.now().year,
+		}
 
-				str_to_doc = {'reporter_name': jdata['issue']['fields']['customfield_17600'],
-							'office_position': jdata['issue']['fields']['customfield_17601'],
-							'reporter_name': jdata['issue']['fields']['customfield_17600'],
-							'issue_type': jdata['issue']['fields']['issuetype']['name'],
-							'start_day': start_of_holiday.split('-')[2],
-							'start_month': start_of_holiday.split('-')[1],
-							'end_day': end_of_holiday.split('-')[2],
-							'end_month': start_of_holiday.split('-')[1],
-							'end_year': start_of_holiday.split('-')[0],
-							'end_of_holiday': jdata['issue']['fields']['customfield_16601'],
-							'holiday_duration': holiday_duration(start_of_holiday, end_of_holiday),
-							'now_day': date.today().isoformat().split('-')[2],
-							'now_month': date.today().isoformat().split('-')[1],
-							'now_year': date.today().isoformat().split('-')[0]}
+		ticket_key = payload['issue']['key']
 
-				doc = DocxTemplate("template_opl.docx")
-				doc.render(str_to_doc)
-				doc.save(jdata['issue']['key'] + ".docx")
+		doc = DocxTemplate('template_opl.docx')
+		doc.render(doc_vars)
+		doc.save(ticket_key + '.docx')
 
-				ticket_key = jdata['issue']['key']
-				reporter_name = jdata['issue']['fields']['reporter']['displayName']
-				issue_type = jdata['issue']['fields']['issuetype']['name']
-				holiday_duration = holiday_duration(start_of_holiday, end_of_holiday)
+		return make_response('ok', 200)
 
-#				print('Ticket: %s | Reporter: %s' % (ticket_key, str_to_doc['reporter_name']))
-#				print('Issue type is: %s' % str_to_doc['issue_type'])
-#				print('Начало отпуска: %s, конец отпуска: %s, отпуск длится: %s' % (str_to_doc['start_of_holiday'], str_to_doc['end_of_holiday'], str_to_doc['holiday_duration']))
-				return make_response('ok', 200)
-			else:
-				msg = 'Invalid JIRA hook event. It should be "jira:issue_created" or "_updated"'
-				print(msg)
-				return make_response(msg, 403)
-
-		except:
-			print(traceback.format_exc())
-			msg = 'Incorrect data! Can not parse to json format'
-			print(msg)
-			return make_response(msg, 500)
-
-@app.route('/', methods=['GET'])
-def index():
-	return "Jira webhook listener"
-
-if __name__ == '__main__':
-	app.run(host='127.0.0.1',
-		debug=True)
+	except Exception as e:
+		error_message = 'Incorrect data! Can\'t parse request: {}'.format(e)
+		print(error_message)
+		return make_response(error_message, 500)
